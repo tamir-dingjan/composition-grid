@@ -20,6 +20,7 @@ def set_concentration_factor(x, the_wanted_lipid, new_con):
 
 
 def set_concentration_value(x, changed_lipid, factor, new_con):
+    # calculates and returns the new concentration for the lipid
     if x["lipid"] == changed_lipid:
         new_concentration = new_con*x["total_concentration"]
     else:
@@ -32,5 +33,6 @@ new_grid = "temp_until_i_find_the_function"
 for i in [0, 1, 2, 3, 4]:
     wanted_lipid = ""
     f = set_concentration_factor(old_grid, wanted_lipid, i)
-    new_grid["updated_concentration"] = old_grid.apply(set_concentration_value(old_grid,wanted_lipid, f, i), axis="columns")
+    new_grid["updated_concentration"] = old_grid.apply(set_concentration_value(old_grid,wanted_lipid, f, i),
+                                                       axis="columns")
     new_grid.to_csv("???/new_composition_grid.csv")
