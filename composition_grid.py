@@ -31,9 +31,9 @@ def set_concentration_value(x, changed_lipid, new_con, factor):
 # set updated composition grid file
 old_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
 new_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
-for i in [4]:
+for i in [6,3,2]:
     wanted_lipid = "Cer4412"
     f = set_concentration_factor(old_grid, wanted_lipid, i)
     new_grid["updated_concentration"] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipid, new_con=i,
                                                        factor=f, axis="columns")
-    new_grid.to_csv("C:\\Users\\hfComp\\Desktop\\WS\\new_composition_grid.csv")
+    new_grid.to_csv("C:\\Users\\hfComp\\Desktop\\WS\\new_composition_grid" + str(i) + ".csv")
