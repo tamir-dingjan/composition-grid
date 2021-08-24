@@ -15,25 +15,26 @@ def set_concentration_factor(x, changed_lipid, new_con):
     old_con = x.loc[x['ID'] == changed_lipid, ['total_concentration']]
     total_sum = np.sum(x["total_concentration"])
     factor = (total_sum-new_con*old_con)/(total_sum-old_con)
-    print(factor.at[87, 'total_concentration'])
     return factor.at[87, 'total_concentration']
 
 
-def set_concentration_value(x, changed_lipid, new_con, factor):
+def set_concentration_value(x, changed_lipid, new_con, membrane_part, factor):
     # calculates and returns the new concentration for the lipid
     if str(x['ID']) == changed_lipid:
-        new_concentration = new_con*x["total_concentration"]
+        new_concentration = new_con*x[membrane_part]
     else:
-        new_concentration = x['total_concentration'] * factor
+        new_concentration = x[membrane_part] * factor
     return new_concentration
 
 
 # set updated composition grid file
 old_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
 new_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
-for i in [6,3,2]:
-    wanted_lipid = "Cer4412"
+membrane_parts = input("Choose membrane layer you want to change. \nFor both layers type 'total_concentration'."
+                       "\nFor outer layer type 'outside'. \nFor inner layer type 'inside':")
+wanted_lipid = input("Insert lipid ID:")
+for i in [2, 3, 4]:
     f = set_concentration_factor(old_grid, wanted_lipid, i)
-    new_grid["updated_concentration"] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipid, new_con=i,
-                                                       factor=f, axis="columns")
+    new_grid[membrane_parts] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipid, new_con=i,
+                                              membrane_part=membrane_parts, factor=f, axis="columns")
     new_grid.to_csv("C:\\Users\\hfComp\\Desktop\\WS\\new_composition_grid" + str(i) + ".csv")
