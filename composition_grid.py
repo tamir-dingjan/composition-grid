@@ -15,8 +15,13 @@ def set_concentration_factor(x, changed_lipid, membrane_part, new_con):
     # finds the new concentration factor for one wanted lipid
     old_con = x.loc[x['ID'] == changed_lipid, [membrane_part]]
     total_sum = np.sum(x[membrane_part])
-    factor = (total_sum-((total_sum/100)*new_con))/(total_sum-old_con)
+    factor = (total_sum-((total_sum/100)*sum(new_con)))/(total_sum-old_con)
     return factor.get(membrane_part)
+
+
+def get_old_con(x, changed_lipid, membrane_part):
+    old_con = x.loc[x['ID'] == changed_lipid, [membrane_part]]
+    return old_con
 
 
 def set_concentration_value(x, changed_lipid, new_con, membrane_part, total_sum, factor):
@@ -33,7 +38,7 @@ old_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv
 new_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
 # membrane_parts = input("Choose membrane layer you want to change. \nFor both layers type 'total_concentration'."
 #                       "\nFor outer layer type 'outside'. \nFor inner layer type 'inside':")
-wanted_lipids = [("Cer4412", [3, 4, 5], "total_concentration"), ("Cer4202", [2, 3], "inside")]
+wanted_lipids = [("Cer4412", [3], "total_concentration"), ("Cer4202", [2], "inside")]
 for item in wanted_lipids:
     wanted_lipid = item[0]
     for i in item[1]:
