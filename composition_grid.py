@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import itertools
 # import json
 
 
@@ -38,9 +39,25 @@ old_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv
 new_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
 # membrane_parts = input("Choose membrane layer you want to change. \nFor both layers type 'total_concentration'."
 #                       "\nFor outer layer type 'outside'. \nFor inner layer type 'inside':")
-wanted_lipids = [("Cer4412", [3, 4, 5], "total_concentration"), ("Cer4202", [2, 3], "inside")]
+wanted_lipids = [("Cer4412", (3, 6, 1), "total_concentration"), ("Cer4202", (2, 3, 0.5), "inside")]
 old_con_out = calc_old_con(old_grid, wanted_lipids, "outside")
 old_con_in = calc_old_con(old_grid, wanted_lipids, "inside")
+new_out = []
+new_in = []
+array_in = []
+array_out = []
+for lipid in wanted_lipids:
+    if lipid[2] != "inside":
+        new_out.append(np.arange(lipid[1][0], lipid[1][1], lipid[1][2]))
+    if lipid[2] != "outside":
+        new_in.append(np.arange(lipid[1][0], lipid[1][1], lipid[1][2]))
+first_in, *rest_in = new_in
+first_out, *rest_out = new_out
+for tup in itertools.product(first_in, *rest_in):
+    array_in.append(tup)
+for tup in itertools.product(first_out, *rest_out):
+    array_out.append(tup)
+print(array_out, "-", array_in)
 for lipid in range(len(wanted_lipids[:-1])):
     item = wanted_lipids[lipid]
     item_two = wanted_lipids[lipid+1]
@@ -70,5 +87,6 @@ for lipid in range(len(wanted_lipids[:-1])):
                                                                                 "inside",
                                                                                 new_in, old_con_in), axis="columns")
             new_grid["total_concentration"] = new_grid["inside"].fillna(value=0) + new_grid["outside"].fillna(value=0)
-            new_grid.to_csv("C:\\Users\\hfComp\\Desktop\\WS\\new_composition_grid" + wanted_lipid + "_" + str(new_out) +
-                            "_" + str(new_in) + ".csv")
+            new_grid.to_csv("C:\\Users\\hfComp\\Desktop\\WS\\new_composition_grid" + wanted_lipid + "_" +
+                            str(item[1][i]) +
+                            "_" + str(item_two[1][z]) + ".csv")
