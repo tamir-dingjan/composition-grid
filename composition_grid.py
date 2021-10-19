@@ -68,6 +68,7 @@ old_con_in = calc_old_con(old_grid, wanted_lipids, "inside")
 array_in = calc_new_con_grid("inside")
 array_out = calc_new_con_grid("outside")
 print(array_out, "-", array_in)
+
 """
 for outer_con in range(len(array_out)):
     for inner_con in range(len(array_in)):
