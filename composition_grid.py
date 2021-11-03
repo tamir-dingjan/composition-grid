@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import itertools
-# import json
+import argparse
 
 
 def set_concentration_factor(x, membrane_part, new_con, old_con):
@@ -43,6 +43,21 @@ def calc_new_con_grid(membrane_part):
     return array
 
 
+def process_config_file(wanted_lipids_file):
+    wanted_lipids_list = wanted_lipids_file.values.tolist()
+    working_lipids = []
+    for item in wanted_lipids_list:
+        item[1] = [float(s) for s in item[1].split()]
+        item[2] = [float(s) for s in item[2].split()]
+        if len(item[0].split()) > 1:
+            for new_item in item[0].split():
+                working_lipids.append([new_item, item[1], item[2]])
+            wanted_lipids_list.remove(item)
+    for item in working_lipids:
+        wanted_lipids_list.append(item)
+    return wanted_lipids_list
+
+
 def set_concentration_value(x, changed_lipid, new_con, membrane_part, total_sum, factor):
     # calculates and returns the new concentration for the lipid
     if factor == 0:
@@ -68,18 +83,24 @@ def set_concentration_value(x, changed_lipid, new_con, membrane_part, total_sum,
 
 # set updated composition grid file
 old_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
+wanted_lipid_file = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\config_file.csv")
 # membrane_parts = input("Choose membrane layer you want to change. \nFor both layers type 'total_concentration'."
 #                       "\nFor outer layer type 'outside'. \nFor inner layer type 'inside':")
 # wanted_lipids = [[lipid_name, inside_tuple, outside_tuple], [...], [...]]
-wanted_lipids = [["Cer4412", (3, 5, 1), (3, 5, 1)], ["Cer4202", (2, 2.5, 0.5), (0, 0, 1)]]
+wanted_lipids = process_config_file(wanted_lipid_file)
+# wanted_lipids = [["Cer4412", (3, 5, 1), (3, 5, 1)], ["Cer4202", (2, 2.5, 0.5), (0, 0, 1)],
+#                 ["Cer4222", (1, 2, 1), (2, 4, 2)]]
 old_con_out = calc_old_con(old_grid, wanted_lipids, "outside")
 old_con_in = calc_old_con(old_grid, wanted_lipids, "inside")
-array_in = calc_new_con_grid("inside")
 array_out = calc_new_con_grid("outside")
+array_in = calc_new_con_grid("inside")
 print(array_out, "-", array_in)
+print(wanted_lipids[1])
+count = 0
 for outer_con in array_out:
     trash = [array_in[0]]
-    while array_in[0][0] == trash[-1][0]:
+    while array_in[0][1] == trash[-1][1]:
+        count += 1
         inner_con = array_in[0]
         new_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
         new_grid["outside"] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipids,
@@ -100,11 +121,11 @@ for outer_con in array_out:
         new_grid["total_concentration"] = new_grid["inside"].fillna(value=0) + new_grid["outside"].fillna(value=0)
         new_grid.to_csv("C:\\Users\\hfComp\\Desktop\\WS\\new_composition_grid" + wanted_lipids[0][0] + "_in" +
                         str(sum(inner_con)) +
-                        "_out" + str(sum(outer_con)) + ".csv")
+                        "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
         trash.append(array_in.pop(0))
         print(trash[-1])
-    if len(array_in) == 0:
-        break
+        if len(array_in) == 0:
+            break
 
 
 
