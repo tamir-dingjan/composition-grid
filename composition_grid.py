@@ -51,11 +51,13 @@ def process_config_file(wanted_lipids_file):
         item[2] = [float(s) for s in item[2].split()]
         if len(item[0].split()) > 1:
             for new_item in item[0].split():
-                working_lipids.append([new_item, item[1], item[2]])
-            wanted_lipids_list.remove(item)
-    for item in working_lipids:
-        wanted_lipids_list.append(item)
-    return wanted_lipids_list
+                if item[3] == "manual":
+                    working_lipids.append([new_item, item[1], item[2]])
+                elif item[3] == "fixed":
+                    print("write me")
+        else:
+            working_lipids.append([item])
+    return working_lipids
 
 
 def set_concentration_value(x, changed_lipid, new_con, membrane_part, total_sum, factor):
