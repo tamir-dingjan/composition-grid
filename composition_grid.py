@@ -19,12 +19,14 @@ def calc_old_con(x, changed_lipids, membrane_part):
         index_num = 1
     elif membrane_part == "outside":
         index_num = 2
+    zero_index_list = []
     for item_lipid in changed_lipids:
         for item_name in item_lipid[0]:
             if item_lipid[index_num] != [0.0, 0.0, 1.]:
                 value = x.loc[x['ID'] == item_name, [membrane_part]]
                 con = con + np.sum(value[membrane_part])
-    return con
+                zero_index_list.append(changed_lipids.index(item_lipid))
+    return con, zero_index_list
 
 
 def calc_new_con_grid(membrane_part):
@@ -46,19 +48,31 @@ def calc_new_con_grid(membrane_part):
 
 
 def process_config_file(wanted_lipids_file):
+    global old_grid
     wanted_lipids_list = wanted_lipids_file.values.tolist()
     working_lipids = []
     for item in wanted_lipids_list:
         item[1] = [float(s) for s in item[1].split()]
+        item[0] = item[0].split()
         if item[3] == "manual":
             item[2] = [float(s) for s in item[2].split()]
-            working_lipids.append([item[0].split(), item[1], item[2]])
-        """elif item[3] == "fixed":
-            if (len(item[0].split()) == 1) and (old_grid.loc(item[0], "outside") > 0) \
-                    and (old_grid.loc(item[0], "inside") > 0):
-                ratio = old_grid.loc(item[0], "outside")/old_grid.loc(item[0], "inside")
-                item[2] = [float(s)*ratio for s in item[1].split()]
-            elif (old_grid.loc(item[0], "outside") == 0) or (old_grid.loc(item[0], "inside") == 0):"""
+        elif item[3] == "fixed":
+            out_grid = old_grid.loc[old_grid["ID"] == str(item[0][0]), ["outside"]].values[0][0]
+            print(out_grid, type(out_grid))
+            in_grid = old_grid.loc[old_grid["ID"] == str(item[0][0]), ["inside"]].values[0][0]
+            if (len(item[0]) == 1) and (out_grid > 0) and (out_grid is not np.nan) and (in_grid is not np.nan)\
+                    and (in_grid > 0):
+                ratio = out_grid/in_grid
+                item[2] = [float(s)*ratio for s in item[1]]
+            elif (out_grid == 0) or (out_grid is np.nan):
+                item[2] = [0.0, 0.0, 1.0]
+            elif (in_grid is np.nan) or (in_grid == 0):
+                item[2] = [float(s) for s in item[1]]
+                item[1] = [0.0, 0.0, 1.0]
+        if item[1] == [0.0, 0.0, 1.0] or item[2] == [0.0, 0.0, 1.0]:
+            working_lipids.insert(0, [item[0], item[1], item[2]])
+        else:
+            working_lipids.append([item[0], item[1], item[2]])
     return working_lipids
 
 
@@ -87,6 +101,7 @@ def set_concentration_value(x, changed_lipid, new_con, membrane_part, total_sum,
 
 # set updated composition grid file
 old_grid = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\lipidomics_with_chol.csv")
+old_grid = old_grid.fillna(0)
 wanted_lipid_file = pd.read_csv("C:\\Users\\hfComp\\Desktop\\WS\\config_file.csv")
 # membrane_parts = input("Choose membrane layer you want to change. \nFor both layers type 'total_concentration'."
 #                       "\nFor outer layer type 'outside'. \nFor inner layer type 'inside':")
@@ -95,30 +110,42 @@ wanted_lipids = process_config_file(wanted_lipid_file)
 print(wanted_lipids)
 # wanted_lipids = [["Cer4412", (3, 5, 1), (3, 5, 1)], ["Cer4202", (2, 2.5, 0.5), (0, 0, 1)],
 #                 ["Cer4222", (1, 2, 1), (2, 4, 2)]]
-old_con_out = calc_old_con(old_grid, wanted_lipids, "outside")
-old_con_in = calc_old_con(old_grid, wanted_lipids, "inside")
+old_con_out, index_out = calc_old_con(old_grid, wanted_lipids, "outside")
+old_con_in, index_in = calc_old_con(old_grid, wanted_lipids, "inside")
 array_out = calc_new_con_grid("outside")
 array_in = calc_new_con_grid("inside")
 print(array_out, "-", array_in)
-print(wanted_lipids[1])
+print(wanted_lipids[1], index_in, index_out)
 count = 0
 if len(array_in) >= len(array_out):
     big = array_in
     small = array_out
     chosen = "in"
+    zero_index_small = index_out
+    zero_index_big = index_in
 else:
     big = array_out
     small = array_in
     chosen = "out"
+    zero_index_big = index_out
+    zero_index_small = index_in
 mod_factor = len(big)/len(small)
+print(len(big), "  ", len(small))
 for small_con in small:
     trash = [big[0]]
     current_mod_factor = mod_factor
     reg = 0
     while current_mod_factor > 0:
         bigger_con = big[reg]
-        print("reg: " + str(reg) + " last: " + str(bigger_con))
-        if (bigger_con[-1] == trash[-1][-1]) and (bigger_con[0] == trash[-1][0]):
+        print("reg: " + str(reg) + " last: " + str(bigger_con) + "mod: " + str(current_mod_factor), "small: ",
+              str(small_con))
+        val_bool = []
+        for index_big in zero_index_small:
+            if bigger_con[index_big] == trash[-1][index_big]:
+                val_bool.append(True)
+            else:
+                val_bool.append(False)
+        if all(val_bool):
             count += 1
             current_mod_factor -= 1
             if chosen == "in":
