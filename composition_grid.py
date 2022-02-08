@@ -57,10 +57,16 @@ def process_config_file(wanted_lipids_file):
         if item[3] == "manual":
             item[2] = [float(s) for s in item[2].split()]
         elif item[3] == "fixed":
-            out_grid = old_grid.loc[old_grid["ID"] == str(item[0][0]), ["outside"]].values[0][0]
-            print(out_grid, type(out_grid))
-            in_grid = old_grid.loc[old_grid["ID"] == str(item[0][0]), ["inside"]].values[0][0]
-            if (len(item[0]) == 1) and (out_grid > 0) and (out_grid is not np.nan) and (in_grid is not np.nan)\
+            out_grid = 0.0
+            in_grid = 0.0
+            for lipid in item[0]:
+                out_grid = out_grid + ((old_grid.loc[old_grid["ID"] == str(lipid),
+                                                     ["outside"]].values[0][0]) / np.sum(old_grid["outside"])) * 100
+                print(out_grid, type(out_grid))
+                in_grid = in_grid + ((old_grid.loc[old_grid["ID"] == str(lipid),
+                                                   ["inside"]].values[0][0]) / np.sum(old_grid["inside"])) * 100
+                print(in_grid)
+            if (out_grid > 0) and (out_grid is not np.nan) and (in_grid is not np.nan)\
                     and (in_grid > 0):
                 ratio = out_grid/in_grid
                 item[2] = [float(s)*ratio for s in item[1]]
@@ -87,7 +93,17 @@ def set_concentration_value(x, changed_lipid, new_con, membrane_part, total_sum,
         index_layer = 2
     ids = []
     for lipid in changed_lipid:
-        ids.append(lipid[0][0])
+        if (len(lipid[0]) > 1) and (str(x['ID']) in lipid[0]):
+            ids.append(lipid[0])
+            index_num = ids.index(lipid[0])
+            if new_con[index_num] != 0:
+                new_concentration = calc_fam_factor(lipid[0], new_con[index_num], membrane_part, total_sum,
+                                                    str(x['ID']))
+            else:
+                new_concentration = x[membrane_part] * factor
+            return new_concentration
+        else:
+            ids.append(lipid[0][0])
     if str(x['ID']) in ids:
         index_num = ids.index(x['ID'])
         if new_con[index_num] != 0:
@@ -97,6 +113,16 @@ def set_concentration_value(x, changed_lipid, new_con, membrane_part, total_sum,
     else:
         new_concentration = x[membrane_part]*factor
     return new_concentration
+
+
+def calc_fam_factor(lipids, concentration, membrane_part, total_sum, chosen_lipid):
+    # calculates and returns the family concentration factor
+    fam_sum = 0
+    for lipid in lipids:
+        fam_sum = fam_sum + old_grid.loc[old_grid["ID"] == str(lipid), [membrane_part]].values[0][0]
+    chosen_con = old_grid.loc[old_grid["ID"] == chosen_lipid, [membrane_part]].values[0][0]
+    fam_factor = ((total_sum*(concentration/100))/fam_sum) * chosen_con
+    return fam_factor
 
 
 # set updated composition grid file
