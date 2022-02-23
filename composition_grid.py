@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import itertools
-# import argparse
+import argparse
 
 
 def set_concentration_factor(x, membrane_part, new_con, old_con):
@@ -56,7 +56,12 @@ def process_config_file(wanted_lipids_file):
         item[0] = item[0].split()
         if item[3] == "manual":
             item[2] = [float(s) for s in item[2].split()]
+            if item[2] == [] or item[1] == []:
+                raise Exception("Please specify wanted concentration variables for both leaflets :)")
         elif item[3] == "fixed":
+            print(pd.isna(item[2]), pd.isna(item[1]))
+            if (not all(pd.isna(item[1]))) and (not all(pd.isna(item[2]))):
+                raise Exception("Please specify wanted concentration variables only for the chosen leaflet :)")
             out_grid = 0.0
             in_grid = 0.0
             for lipid in item[0]:
