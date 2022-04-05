@@ -247,10 +247,11 @@ for small_con in small:
                                 + "_" + str(count) + ".csv")
                 # new_grid.to_csv(new_grid_path + wanted_lipids[0][0][0] + "_in" + str(sum(inner_con)) +
                 #                 "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
-            else:
+            """else:
                 for selection in selected_lipids:
                     selected_con = selection[1][0]
                     while selected_con <= selection[1][1]:
+                    """
 
             trash.append(big.pop(reg))
             print(trash[-1])
