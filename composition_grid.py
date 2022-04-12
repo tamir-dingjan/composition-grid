@@ -45,15 +45,14 @@ def calc_old_con(x, changed_lipids, membrane_part):
     return con, zero_index_list
 
 
-def calc_new_con_grid(membrane_part):
-    global wanted_lipids
+def calc_new_con_grid(membrane_part, wanted_lipids_list):
     index_num = 0
     if membrane_part == "inside":
         index_num = 1
     elif membrane_part == "outside":
         index_num = 2
     new = []
-    for lipid in wanted_lipids:
+    for lipid in wanted_lipids_list:
         lipid[index_num] = np.arange(lipid[index_num][0], lipid[index_num][1]+lipid[index_num][2], lipid[index_num][2])
         new.append(lipid[index_num])
     array = []
@@ -116,7 +115,7 @@ def process_config_file(wanted_lipids_file):
             else:
                 working_lipids.append([item[0], item[1], item[2]])
         else:
-            selected_lipids_list.append([item[0], item[1], item[2]])
+            selected_lipids_list.append([item[0], item[1], item[2], item[4]])
     return working_lipids, selected_lipids_list
 
 
@@ -163,7 +162,32 @@ def calc_fam_factor(lipids, concentration, membrane_part, total_sum, chosen_lipi
     return fam_factor
 
 
-# def set_selected_mode_value():
+"""def set_selected_mode_value(x, membrane_part, new_con, lipids_selection):
+    #create ID list for [0] and [3]
+    
+    #if in id[0] - new con updates according to formula
+    #if in id[3] - new con updates according to formula
+    total_sum = np.sum(old_grid[membrane_part])
+    original_part_sum_after = (total_sum / 100) * new_con
+    original_part_sum_before = 0
+    for original_lipid in lipids_selection[0]:
+
+    return new_selected_concentration"""
+
+
+def check_if_selected(membrane_part, new_con, selected):
+    total_sum = np.sum(old_grid[membrane_part])
+    primer_sum = 0
+    for primer_lipid in selected[0]:
+        primer_sum = primer_sum + (old_grid.loc[old_grid["ID"] == str(primer_lipid), [membrane_part]].values[0][0])
+    new_con_for = (total_sum/100)*new_con
+    select_sum = 0
+    for lipid in selected[3]:
+        select_sum = select_sum + (old_grid.loc[old_grid["ID"] == str(lipid), [membrane_part]].values[0][0])
+    if ((select_sum < (new_con_for - primer_sum)) and (new_con_for > primer_sum)) or \
+            ((primer_sum < (new_con_for - select_sum)) and (new_con_for < primer_sum)):
+        print(select_sum, primer_sum, new_con_for)
+        raise Exception("Selected lipids concentration is too small :(")
 
 
 # set updated composition grid file
@@ -181,9 +205,13 @@ print(wanted_lipids, "sep",  selected_lipids)
 #                 ["Cer4222", (1, 2, 1), (2, 4, 2)]]
 old_con_out, index_out = calc_old_con(old_grid, wanted_lipids, "outside")
 old_con_in, index_in = calc_old_con(old_grid, wanted_lipids, "inside")
-array_out = calc_new_con_grid("outside")
-array_in = calc_new_con_grid("inside")
+array_out = calc_new_con_grid("outside", wanted_lipids)
+array_in = calc_new_con_grid("inside", wanted_lipids)
+array_out_selected = calc_new_con_grid("outside", selected_lipids)
+array_in_selected = calc_new_con_grid("inside", selected_lipids)
 print(array_out, "-", array_in)
+print(array_out_selected, "---", array_in_selected)
+print(selected_lipids)
 print(wanted_lipids[1], index_in, index_out)
 count = 0
 if len(array_in) >= len(array_out):
@@ -247,12 +275,17 @@ for small_con in small:
                                 + "_" + str(count) + ".csv")
                 # new_grid.to_csv(new_grid_path + wanted_lipids[0][0][0] + "_in" + str(sum(inner_con)) +
                 #                 "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
-            """else:
+            else:
                 for selection in selected_lipids:
-                    selected_con = selection[1][0]
-                    while selected_con <= selection[1][1]:
-                    """
-
+                    selected_con_in = selection[1][0]
+                    selected_con_out = selection[2][0]
+                    while (selected_con_in <= selection[1][1]) or (selected_con_out <= selection[2][1]):
+                        check_if_selected("inside", selected_con_in, selection)
+                        check_if_selected("outside", selected_con_out, selection)
+                        #set_selected_mode_value("inside", selected_con_in, selection)
+                        #set_selected_mode_value("outside", selected_con_out, selection)
+                        selected_con_in = selected_con_in + selection[1][2]
+                        selected_con_out = selected_con_out + selection[2][2]
             trash.append(big.pop(reg))
             print(trash[-1])
             reg -= 1
