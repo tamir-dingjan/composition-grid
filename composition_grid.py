@@ -103,7 +103,7 @@ def process_config_file(wanted_lipids_file):
             if (out_grid > 0) and (out_grid is not np.nan) and (in_grid is not np.nan) \
                     and (in_grid > 0):
                 ratio = non_listed_grid / listed_grid
-                item[non_listed_layer] = [round(float(s) * ratio, 15) for s in item[listed_layer]]
+                item[non_listed_layer] = [round(float(s) * ratio, 10) for s in item[listed_layer]]
             elif (non_listed_grid == 0) or (non_listed_grid is np.nan):
                 item[non_listed_layer] = [0.0, 0.0, 1.0]
             elif (listed_grid is np.nan) or (listed_grid == 0):
@@ -188,7 +188,7 @@ def set_selected_mode_value(x, membrane_part, new_con, lipids_selection):
             else:
                 new_selected_concentration = x[membrane_part]
             return new_selected_concentration
-        elif str(x['ID']) in lipid[3] and str(x['ID']) not in ids_3:
+        elif str(x['ID']) in lipid[3]:
             ids_3.append(lipid[3])
             index_num = ids_3.index(lipid[3])
             check_if_selected(membrane_part, new_con[index_num], lipid)
@@ -213,6 +213,8 @@ def set_selected_mode_value(x, membrane_part, new_con, lipids_selection):
             return new_selected_concentration
         else:
             new_selected_concentration = x[membrane_part]
+            ids_0.append(lipid[0][0])
+            ids_3.append(lipid[3][0])
     return new_selected_concentration
 
 
