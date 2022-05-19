@@ -15,8 +15,17 @@ args = my_parser.parse_args()
 new_grid_path = args.New_Grid_Path
 old_grid_path = args.Data_Path
 wanted_lipids_file_path = args.Setup_Path
-if not os.path.isdir(new_grid_path) or not os.path.isdir(old_grid_path) or not os.path.isdir(wanted_lipids_file_path):
-    print('The path specified does not exist')
+
+if not os.path.isdir(new_grid_path):
+    print('The output path specified does not exist: %s' % new_grid_path)
+    sys.exit()
+
+if not os.path.isfile(old_grid_path):
+    print("Couldn't find input grid data in file: %s" % old_grid_path)
+    sys.exit()
+     
+if not os.path.isfile(wanted_lipids_file_path):
+    print("Couldn't find config file: %s" % wanted_lipids_file_path)
     sys.exit()
 
 
@@ -301,11 +310,11 @@ array_out_selected = calc_new_con_grid("outside", selected_lipids)
 array_in_selected = calc_new_con_grid("inside", selected_lipids)
 matched_array_selected, big_leaf = match_in_out(array_in_selected, array_out_selected,
                                                 index_in_select, index_out_select)
-print(array_out, "-", array_in)
-print(array_out_selected, "---", array_in_selected)
-print(selected_lipids)
-print(wanted_lipids[1], index_in, index_out)
-print(matched_array_selected, big_leaf, "matched")
+# print(array_out, "-", array_in)
+# print(array_out_selected, "---", array_in_selected)
+# print(selected_lipids)
+# print(wanted_lipids[1], index_in, index_out)
+# print(matched_array_selected, big_leaf, "matched")
 follow = 0
 count = 0
 if len(array_in) >= len(array_out):
@@ -364,8 +373,10 @@ for small_con in small:
                                                 axis="columns")
             new_grid["total_concentration"] = new_grid["inside"].fillna(value=0) + new_grid["outside"].fillna(value=0)
             if len(selected_lipids) == 0:
-                new_grid.to_csv(folder_path + "/new_composition_grid" + wanted_lipids[0][0][0] + "_in" +
-                                str(sum(inner_con)) + "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
+                # new_grid.to_csv(folder_path + "/new_composition_grid" + wanted_lipids[0][0][0] + "_in" +
+                #                 str(sum(inner_con)) + "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
+
+                new_grid.to_csv(os.path.join(folder_path, str(follow) + ".csv"))
             else:
                 new_selected_grid = new_grid.copy()
                 for tot_concentration in matched_array_selected:
@@ -395,9 +406,11 @@ for small_con in small:
                                                                           axis="columns")
                         new_selected_grid["total_concentration"] = (new_selected_grid["inside"].fillna(value=0)
                                                                     + new_selected_grid["outside"].fillna(value=0))
-                        new_selected_grid.to_csv(folder_path + "/new_composition_grid" +
-                                                 wanted_lipids[0][0][0] + "_in" + str(sum(inner_con)) + "_out" +
-                                                 str(sum(outer_con)) + "_" + str(follow) + ".csv")
+                        # new_selected_grid.to_csv(folder_path + "/new_composition_grid" +
+                        #                          wanted_lipids[0][0][0] + "_in" + str(sum(inner_con)) + "_out" +
+                        #                          str(sum(outer_con)) + "_" + str(follow) + ".csv")
+                        
+                        new_selected_grid.to_csv(os.path.join(folder_path, str(follow) + ".csv"))
             trash.append(big.pop(reg))
             print(trash[-1])
             reg -= 1
