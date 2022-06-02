@@ -6,18 +6,31 @@ import os
 import sys
 import time
 
-my_parser = argparse.ArgumentParser(prog='composition_grid', description='Creates updated composition grid files',
-                                    epilog="Good luck with your experiments! :)")
-my_parser.add_argument('Data_Path', metavar='data_path', type=str, help='the path to the lipodimics data')
-my_parser.add_argument('Setup_Path', metavar='setup_path', type=str, help='the path to setup data')
-my_parser.add_argument('New_Grid_Path', metavar='new_grid_path', type=str, help="the path to the new grid's file")
-args = my_parser.parse_args()
-new_grid_path = args.New_Grid_Path
-old_grid_path = args.Data_Path
-wanted_lipids_file_path = args.Setup_Path
-if not os.path.isdir(new_grid_path) or not os.path.isdir(old_grid_path) or not os.path.isdir(wanted_lipids_file_path):
-    print('The path specified does not exist')
-    sys.exit()
+# my_parser = argparse.ArgumentParser(prog='composition_grid', description='Creates updated composition grid files',
+#                                     epilog="Good luck with your experiments! :)")
+# my_parser.add_argument('Data_Path', metavar='data_path', type=str, help='the path to the lipodimics data')
+# my_parser.add_argument('Setup_Path', metavar='setup_path', type=str, help='the path to setup data')
+# my_parser.add_argument('New_Grid_Path', metavar='new_grid_path', type=str, help="the path to the new grid's file")
+# args = my_parser.parse_args()
+# new_grid_path = args.New_Grid_Path
+# old_grid_path = args.Data_Path
+# wanted_lipids_file_path = args.Setup_Path
+#
+# if not os.path.isdir(new_grid_path):
+#     print('The output path specified does not exist: %s' % new_grid_path)
+#     sys.exit()
+#
+# if not os.path.isfile(old_grid_path):
+#     print("Couldn't find input grid data in file: %s" % old_grid_path)
+#     sys.exit()
+#
+# if not os.path.isfile(wanted_lipids_file_path):
+#     print("Couldn't find config file: %s" % wanted_lipids_file_path)
+#     sys.exit()
+
+new_grid_path = "/Users/flomin/Desktop/composition_grid/files"
+old_grid_path = "/Users/flomin/Desktop/composition_grid/setup_files/lipidomics_with_chol.csv"
+wanted_lipids_file_path = "/Users/flomin/Desktop/composition_grid/setup_files/config_file.csv"
 
 
 def set_concentration_factor(x, membrane_part, new_con, old_con):
@@ -291,117 +304,159 @@ wanted_lipids, selected_lipids = process_config_file(wanted_lipid_file)
 print(wanted_lipids, "sep", selected_lipids)
 # wanted_lipids = [["Cer4412", (3, 5, 1), (3, 5, 1)], ["Cer4202", (2, 2.5, 0.5), (0, 0, 1)],
 #                 ["Cer4222", (1, 2, 1), (2, 4, 2)]]
-old_con_out, index_out = calc_old_con(old_grid, wanted_lipids, "outside")
-old_con_in, index_in = calc_old_con(old_grid, wanted_lipids, "inside")
-array_out = calc_new_con_grid("outside", wanted_lipids)
-array_in = calc_new_con_grid("inside", wanted_lipids)
-blank1, index_out_select = calc_old_con(old_grid, selected_lipids, "outside")
-blank2, index_in_select = calc_old_con(old_grid, selected_lipids, "inside")
-array_out_selected = calc_new_con_grid("outside", selected_lipids)
-array_in_selected = calc_new_con_grid("inside", selected_lipids)
-matched_array_selected, big_leaf = match_in_out(array_in_selected, array_out_selected,
-                                                index_in_select, index_out_select)
-print(array_out, "-", array_in)
-print(array_out_selected, "---", array_in_selected)
-print(selected_lipids)
-print(wanted_lipids[1], index_in, index_out)
-print(matched_array_selected, big_leaf, "matched")
 follow = 0
 count = 0
-if len(array_in) >= len(array_out):
-    big = array_in
-    small = array_out
-    chosen = "in"
-    zero_index_small = index_out
-    zero_index_big = index_in
-else:
-    big = array_out
-    small = array_in
-    chosen = "out"
-    zero_index_big = index_out
-    zero_index_small = index_in
-mod_factor = len(big) / len(small)
-print(len(big), "  ", len(small))
-for small_con in small:
-    trash = [big[0]]
-    current_mod_factor = mod_factor
-    reg = 0
-    while current_mod_factor > 0:
-        bigger_con = big[reg]
-        print("reg: " + str(reg) + " last: " + str(bigger_con) + "mod: " + str(current_mod_factor), "small: ",
-              str(small_con))
-        val_bool = []
-        for index_big in zero_index_small:
-            if bigger_con[index_big] == trash[-1][index_big]:
-                val_bool.append(True)
-            else:
-                val_bool.append(False)
-        if all(val_bool):
-            count += 1
-            current_mod_factor -= 1
-            if chosen == "in":
-                inner_con = bigger_con
-                outer_con = small_con
-            else:
-                inner_con = small_con
-                outer_con = bigger_con
-            # new_grid = pd.read_csv("/Users/flomin/Desktop/composition_grid/setup_files/lipidomics_with_chol.csv")
-            new_grid = pd.read_csv(old_grid_path)
-            new_grid["outside"] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipids,
-                                                 new_con=outer_con,
-                                                 membrane_part="outside",
-                                                 total_sum=np.sum(old_grid["outside"]),
-                                                 factor=set_concentration_factor(
-                                                     old_grid, "outside", sum(outer_con), old_con_out),
-                                                 axis="columns")
-            new_grid["inside"] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipids,
-                                                new_con=inner_con,
-                                                membrane_part="inside",
-                                                total_sum=np.sum(old_grid["inside"]),
-                                                factor=set_concentration_factor(old_grid,
-                                                                                "inside",
-                                                                                sum(inner_con), old_con_in),
-                                                axis="columns")
-            new_grid["total_concentration"] = new_grid["inside"].fillna(value=0) + new_grid["outside"].fillna(value=0)
-            if len(selected_lipids) == 0:
-                new_grid.to_csv(folder_path + "/new_composition_grid" + wanted_lipids[0][0][0] + "_in" +
-                                str(sum(inner_con)) + "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
-            else:
-                new_selected_grid = new_grid.copy()
-                for tot_concentration in matched_array_selected:
-                    for big_concentration in tot_concentration[big_leaf]:
+if len(selected_lipids) > 0:
+    blank1, index_out_select = calc_old_con(old_grid, selected_lipids, "outside")
+    blank2, index_in_select = calc_old_con(old_grid, selected_lipids, "inside")
+    array_out_selected = calc_new_con_grid("outside", selected_lipids)
+    array_in_selected = calc_new_con_grid("inside", selected_lipids)
+    matched_array_selected, big_leaf = match_in_out(array_in_selected, array_out_selected,
+                                                    index_in_select, index_out_select)
+if len(wanted_lipids) > 0:
+    old_con_out, index_out = calc_old_con(old_grid, wanted_lipids, "outside")
+    old_con_in, index_in = calc_old_con(old_grid, wanted_lipids, "inside")
+    array_out = calc_new_con_grid("outside", wanted_lipids)
+    array_in = calc_new_con_grid("inside", wanted_lipids)
+# print(array_out, "-", array_in)
+# print(array_out_selected, "---", array_in_selected)
+# print(selected_lipids)
+# print(wanted_lipids[1], index_in, index_out)
+# print(matched_array_selected, big_leaf, "matched")
+    if len(array_in) >= len(array_out):
+        big = array_in
+        small = array_out
+        chosen = "in"
+        zero_index_small = index_out
+        zero_index_big = index_in
+    else:
+        big = array_out
+        small = array_in
+        chosen = "out"
+        zero_index_big = index_out
+        zero_index_small = index_in
+    mod_factor = len(big) / len(small)
+    print(len(big), "  ", len(small))
+    for small_con in small:
+        trash = [big[0]]
+        current_mod_factor = mod_factor
+        reg = 0
+        while current_mod_factor > 0:
+            bigger_con = big[reg]
+            print("reg: " + str(reg) + " last: " + str(bigger_con) + "mod: " + str(current_mod_factor), "small: ",
+                  str(small_con))
+            val_bool = []
+            for index_big in zero_index_small:
+                if bigger_con[index_big] == trash[-1][index_big]:
+                    val_bool.append(True)
+                else:
+                    val_bool.append(False)
+            if all(val_bool):
+                count += 1
+                current_mod_factor -= 1
+                if chosen == "in":
+                    inner_con = bigger_con
+                    outer_con = small_con
+                else:
+                    inner_con = small_con
+                    outer_con = bigger_con
+                # new_grid = pd.read_csv("/Users/flomin/Desktop/composition_grid/setup_files/lipidomics_with_chol.csv")
+                new_grid = pd.read_csv(old_grid_path)
+                if len(wanted_lipids) > 0:
+                    new_grid["outside"] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipids,
+                                                         new_con=outer_con,
+                                                         membrane_part="outside",
+                                                         total_sum=np.sum(old_grid["outside"]),
+                                                         factor=set_concentration_factor(
+                                                             old_grid, "outside", sum(outer_con), old_con_out),
+                                                         axis="columns")
+                    new_grid["inside"] = old_grid.apply(set_concentration_value, changed_lipid=wanted_lipids,
+                                                        new_con=inner_con,
+                                                        membrane_part="inside",
+                                                        total_sum=np.sum(old_grid["inside"]),
+                                                        factor=set_concentration_factor(old_grid,
+                                                                                        "inside",
+                                                                                        sum(inner_con), old_con_in),
+                                                        axis="columns")
+                    new_grid["total_concentration"] = new_grid["inside"].fillna(value=0) + \
+                                                      new_grid["outside"].fillna(value=0)
+                    if len(selected_lipids) == 0:
+                        # new_grid.to_csv(folder_path + "/new_composition_grid" + wanted_lipids[0][0][0] + "_in" +
+                        #                 str(sum(inner_con)) + "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
+                        new_grid.to_csv(os.path.join(folder_path, str(follow) + ".csv"))
                         follow += 1
-                        if big_leaf == 1:
-                            new_selected_grid["inside"] = new_grid.apply(set_selected_mode_value,
-                                                                         membrane_part="inside",
-                                                                         new_con=tot_concentration[0],
-                                                                         lipids_selection=selected_lipids,
-                                                                         axis="columns")
-                            new_selected_grid["outside"] = new_grid.apply(set_selected_mode_value,
-                                                                          membrane_part="outside",
-                                                                          new_con=big_concentration,
-                                                                          lipids_selection=selected_lipids,
-                                                                          axis="columns")
-                        else:
-                            new_selected_grid["inside"] = new_grid.apply(set_selected_mode_value,
-                                                                         membrane_part="inside",
-                                                                         new_con=big_concentration,
-                                                                         lipids_selection=selected_lipids,
-                                                                         axis="columns")
-                            new_selected_grid["outside"] = new_grid.apply(set_selected_mode_value,
-                                                                          membrane_part="outside",
-                                                                          new_con=tot_concentration[1],
-                                                                          lipids_selection=selected_lipids,
-                                                                          axis="columns")
-                        new_selected_grid["total_concentration"] = (new_selected_grid["inside"].fillna(value=0)
-                                                                    + new_selected_grid["outside"].fillna(value=0))
-                        new_selected_grid.to_csv(folder_path + "/new_composition_grid" +
-                                                 wanted_lipids[0][0][0] + "_in" + str(sum(inner_con)) + "_out" +
-                                                 str(sum(outer_con)) + "_" + str(follow) + ".csv")
-            trash.append(big.pop(reg))
-            print(trash[-1])
-            reg -= 1
-        reg += 1
-        if len(big) == 0:
-            break
-print(follow)
+                        break
+                    new_selected_grid = new_grid.copy()
+                    for tot_concentration in matched_array_selected:
+                        for big_concentration in tot_concentration[big_leaf]:
+                            follow += 1
+                            if big_leaf == 1:
+                                new_selected_grid["inside"] = new_grid.apply(set_selected_mode_value,
+                                                                             membrane_part="inside",
+                                                                             new_con=tot_concentration[0],
+                                                                             lipids_selection=selected_lipids,
+                                                                             axis="columns")
+                                new_selected_grid["outside"] = new_grid.apply(set_selected_mode_value,
+                                                                              membrane_part="outside",
+                                                                              new_con=big_concentration,
+                                                                              lipids_selection=selected_lipids,
+                                                                              axis="columns")
+                            else:
+                                new_selected_grid["inside"] = new_grid.apply(set_selected_mode_value,
+                                                                             membrane_part="inside",
+                                                                             new_con=big_concentration,
+                                                                             lipids_selection=selected_lipids,
+                                                                             axis="columns")
+                                new_selected_grid["outside"] = new_grid.apply(set_selected_mode_value,
+                                                                              membrane_part="outside",
+                                                                              new_con=tot_concentration[1],
+                                                                              lipids_selection=selected_lipids,
+                                                                              axis="columns")
+                            new_selected_grid["total_concentration"] = (new_selected_grid["inside"].fillna(value=0)
+                                                                        + new_selected_grid["outside"].fillna(value=0))
+                            # new_selected_grid.to_csv(folder_path + "/new_composition_grid" +
+                            #                          wanted_lipids[0][0][0] + "_in" + str(sum(inner_con)) + "_out" +
+                            #                          str(sum(outer_con)) + "_" + str(follow) + ".csv")
+                            new_selected_grid.to_csv(os.path.join(folder_path, str(follow) + ".csv"))
+                trash.append(big.pop(reg))
+                print(trash[-1])
+                reg -= 1
+            reg += 1
+            if len(big) == 0:
+                break
+    print(follow)
+elif len(selected_lipids) > 0:
+    new_grid = pd.read_csv(old_grid_path)
+    new_selected_grid = new_grid.copy()
+    for tot_concentration in matched_array_selected:
+        for big_concentration in tot_concentration[big_leaf]:
+            follow += 1
+            if big_leaf == 1:
+                new_selected_grid["inside"] = new_grid.apply(set_selected_mode_value,
+                                                             membrane_part="inside",
+                                                             new_con=tot_concentration[0],
+                                                             lipids_selection=selected_lipids,
+                                                             axis="columns")
+                new_selected_grid["outside"] = new_grid.apply(set_selected_mode_value,
+                                                              membrane_part="outside",
+                                                              new_con=big_concentration,
+                                                              lipids_selection=selected_lipids,
+                                                              axis="columns")
+            else:
+                new_selected_grid["inside"] = new_grid.apply(set_selected_mode_value,
+                                                             membrane_part="inside",
+                                                             new_con=big_concentration,
+                                                             lipids_selection=selected_lipids,
+                                                             axis="columns")
+                new_selected_grid["outside"] = new_grid.apply(set_selected_mode_value,
+                                                              membrane_part="outside",
+                                                              new_con=tot_concentration[1],
+                                                              lipids_selection=selected_lipids,
+                                                              axis="columns")
+            new_selected_grid["total_concentration"] = (new_selected_grid["inside"].fillna(value=0)
+                                                        + new_selected_grid["outside"].fillna(value=0))
+            # new_selected_grid.to_csv(folder_path + "/new_composition_grid" +
+            #                          wanted_lipids[0][0][0] + "_in" + str(sum(inner_con)) + "_out" +
+            #                          str(sum(outer_con)) + "_" + str(follow) + ".csv")
+            new_selected_grid.to_csv(os.path.join(folder_path, str(follow) + ".csv"))
+    print(follow)
