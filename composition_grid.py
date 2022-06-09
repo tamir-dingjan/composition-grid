@@ -96,6 +96,8 @@ def process_config_file(wanted_lipids_file):
     selected_lipids_list = []
     print(wanted_lipids_list)
     for item in wanted_lipids_list:
+        if item[0] != item[0]:
+            continue
         item[0] = item[0].split()
         if item[4] == item[4]:
             item[4] = item[4].split()
