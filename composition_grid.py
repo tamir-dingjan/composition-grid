@@ -6,33 +6,33 @@ import os
 import sys
 import time
 
-my_parser = argparse.ArgumentParser(prog='composition_grid', description='Creates updated composition grid files. '
-                                                                         'for 0 concentration type in file: "-1 -1 1,'
-                                                                         'to keep concentration type in file: 0 0 1"',
-                                    epilog="Good luck with your experiments! :)")
-my_parser.add_argument('Data_Path', metavar='data_path', type=str, help='the path to the lipodimics data')
-my_parser.add_argument('Setup_Path', metavar='setup_path', type=str, help='the path to setup data')
-my_parser.add_argument('New_Grid_Path', metavar='new_grid_path', type=str, help="the path to the new grid's file")
-args = my_parser.parse_args()
-new_grid_path = args.New_Grid_Path
-old_grid_path = args.Data_Path
-wanted_lipids_file_path = args.Setup_Path
+# my_parser = argparse.ArgumentParser(prog='composition_grid', description='Creates updated composition grid files. '
+#                                                                          'for 0 concentration type in file: "-1 -1 1,'
+#                                                                          'to keep concentration type in file: 0 0 1"',
+#                                     epilog="Good luck with your experiments! :)")
+# my_parser.add_argument('Data_Path', metavar='data_path', type=str, help='the path to the lipodimics data')
+# my_parser.add_argument('Setup_Path', metavar='setup_path', type=str, help='the path to setup data')
+# my_parser.add_argument('New_Grid_Path', metavar='new_grid_path', type=str, help="the path to the new grid's file")
+# args = my_parser.parse_args()
+# new_grid_path = args.New_Grid_Path
+# old_grid_path = args.Data_Path
+# wanted_lipids_file_path = args.Setup_Path
+#
+# if not os.path.isdir(new_grid_path):
+#     print('The output path specified does not exist: %s' % new_grid_path)
+#     sys.exit()
+#
+# if not os.path.isfile(old_grid_path):
+#     print("Couldn't find input grid data in file: %s" % old_grid_path)
+#     sys.exit()
+#
+# if not os.path.isfile(wanted_lipids_file_path):
+#     print("Couldn't find config file: %s" % wanted_lipids_file_path)
+#     sys.exit()
 
-if not os.path.isdir(new_grid_path):
-    print('The output path specified does not exist: %s' % new_grid_path)
-    sys.exit()
-
-if not os.path.isfile(old_grid_path):
-    print("Couldn't find input grid data in file: %s" % old_grid_path)
-    sys.exit()
-
-if not os.path.isfile(wanted_lipids_file_path):
-    print("Couldn't find config file: %s" % wanted_lipids_file_path)
-    sys.exit()
-
-# new_grid_path = "/Users/flomin/Desktop/composition_grid/files"
-# old_grid_path = "/Users/flomin/Desktop/composition_grid/setup_files/lipidomics_with_chol_scaled.csv"
-# wanted_lipids_file_path = "/Users/flomin/Desktop/composition_grid/setup_files/config_file.csv"
+new_grid_path = "/Users/flomin/Desktop/composition_grid/files"
+old_grid_path = "/Users/flomin/Desktop/composition_grid/setup_files/lipidomics_with_chol_scaled.csv"
+wanted_lipids_file_path = "/Users/flomin/Desktop/composition_grid/setup_files/config_file.csv"
 
 
 def set_concentration_factor(x, membrane_part, new_con, old_con):
@@ -130,7 +130,7 @@ def process_config_file(wanted_lipids_file):
             if (out_grid > 0) and (out_grid is not np.nan) and (in_grid is not np.nan) \
                     and (in_grid > 0):
                 ratio = non_listed_grid / listed_grid
-                item[non_listed_layer] = [round(float(s) * ratio, 7) for s in item[listed_layer]]
+                item[non_listed_layer] = [round(float(s) * ratio, 8) for s in item[listed_layer]]
             elif (non_listed_grid == 0) or (non_listed_grid is np.nan):
                 item[non_listed_layer] = [0.0, 0.0, 1.0]
             elif (listed_grid is np.nan) or (listed_grid == 0):
@@ -409,6 +409,9 @@ if len(wanted_lipids) > 0:
                         #                str(sum(inner_con)) + "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
                         new_grid.to_csv(os.path.join(folder_path, str(follow) + ".csv"))
                         follow += 1
+                        trash.append(big.pop(reg))
+                        print(trash[-1])
+                        reg -= 1
                         break
                     new_selected_grid = new_grid.copy()
                     for tot_concentration in matched_array_selected:
