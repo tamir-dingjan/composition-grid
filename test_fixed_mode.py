@@ -42,19 +42,19 @@ def test_leaflet_sum():
         # Test if output loadable
         grid = load_grid_composition_file(grid_filepath)
         
-        assert grid["inside"].sum() == 100.0
-        assert grid["outside"].sum() == 100.0
+        assert grid["inside"].sum() == pytest.approx(100.0)
+        assert grid["outside"].sum() == pytest.approx(100.0)
 
         
 @pytest.mark.parametrize(('file_index', 'conc'), [(0, 5.0),(1, 10.0),(2, 15.0),(3, 20.0),(4, 25.0)])
 def test_inside_leaflet(file_index, conc):
     output_files = execute("config1.csv")
     grid = load_grid_composition_file(sorted(output_files)[file_index])
-    assert grid["inside"].tolist()[0] == conc
+    assert grid["inside"].tolist()[0] == pytest.approx(conc)
 
 
 @pytest.mark.parametrize(('file_index', 'conc'), [(0, 2.5),(1, 5.0),(2, 7.5),(3, 10.0),(4, 12.5)])
 def test_outside_leaflet(file_index, conc):
     output_files = execute("config1.csv")
     grid = load_grid_composition_file(sorted(output_files)[file_index])
-    assert grid["outside"].tolist()[0] == conc
+    assert grid["outside"].tolist()[0] == pytest.approx(conc)
