@@ -395,6 +395,8 @@ def generate_grids(new_grid_path, old_grid_path, wanted_lipids_file_path):
                             #                str(sum(inner_con)) + "_out" + str(sum(outer_con)) + "_" + str(count) + ".csv")
                             new_grid.to_csv(os.path.join(folder_path, str(follow) + ".csv"))
                             follow += 1
+                            trash.append(big.pop(reg))
+                            reg -= 1
                             break
                         new_selected_grid = new_grid.copy()
                         for tot_concentration in matched_array_selected:
